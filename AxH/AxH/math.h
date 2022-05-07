@@ -493,24 +493,12 @@ namespace math {
 		using comp<T, A, B>::comp;
 
 		template<typename F,
-		typename = std::enable_if<std::is_convertible<F, T>::value>::type>
-			matrix<T, A, B> operator+(const matrix<F, A, B>& ref) {
+			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		matrix<T, A, B> operator+(const matrix<F, A, B>& ref) {
 			matrix<T, A, B> cpy = *this;
 			for (size_t a = 0; a < A; ++a) {
 				for (size_t b = 0; b < B; ++b) {
 					cpy[a][b] += ref[a][b];
-				}
-			}
-			return cpy;
-		}
-
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
-			matrix<T, A, B> operator+(const matrix<F, A, B>& ref) {
-			matrix<T, A, B> cpy = *this;
-			for (size_t a = 0; a < A; ++a) {
-				for (size_t b = 0; b < B; ++b) {
-					cpy[a][b] -= ref[a][b];
 				}
 			}
 			return cpy;

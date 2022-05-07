@@ -1,4 +1,4 @@
-#include "Env.h"
+#include "env.h"
 
 #ifndef __INPUT_H
 #define __INPUT_H
@@ -6,7 +6,7 @@
 #include <map>
 #include <string>
 
-#ifdef _ENV_WIN32
+#ifdef _ENV_WIN
 #include <windows.h>
 #endif
 
@@ -14,7 +14,7 @@
 #include <GLFW/glfw3.h>
 #endif
 
-#include "Math.h"
+#include "math.h"
 
 #define MOUSE_LEFT 0x00 //0
 #define MOUSE_RIGHT 0x01 //1

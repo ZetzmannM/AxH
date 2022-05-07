@@ -5,9 +5,9 @@
 #include <string>
 #include <sstream>
 
-#include "dtype.h"
+#include "dtypes.h"
 
-#include "ErrorHandling.h"
+#include "errhndl.h"
 
 #include <math.h>
 #include "inc_settings.h"

@@ -198,7 +198,7 @@ void WindowManager::showCursor() {
 pass_ptr<Window> WindowManager::createNewWindow(WIN_BOUNDS rect, const HINSTANCE hInstance, const WindowProperties& properties, const std::string& title, WNDPROC wndProc) {
 	TCHAR szWindowClass[] = _T("TESTFORMS");
 	std::wstring wtitle = Util::StringUtils::stringToWideString(title);
-	const TCHAR* szTitle = wtitle.c_str();
+	const TCHAR* szTitle = title.c_str();
 
 	if (!registeredClass) {
 		WNDCLASSEX wcex;

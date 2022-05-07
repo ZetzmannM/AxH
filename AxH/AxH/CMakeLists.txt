@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.8)
 
 # Add source to this project's executable.
-add_executable (AxH "AxH.cpp" "AxH.h"  "math.h" "dtypes.h"  "errhndl.h" "errhndl.cpp" "env.h" "env.cpp" "utils.cpp" "utils.h" "inc_settings.h" "misc.h" "graph.h" "input.h" "input.cpp" "surface.h" "surface.cpp" "ptr.h")
+add_executable (AxH WIN32 "AxH.cpp" "AxH.h"  "math.h" "dtypes.h"  "errhndl.h" "errhndl.cpp" "env.h" "env.cpp" "utils.cpp" "utils.h" "inc_settings.h" "misc.h" "graph.h" "input.h" "input.cpp" "surface.h" "surface.cpp" "ptr.h")
 set_property(TARGET AxH PROPERTY CXX_STANDARD 17)
 
 # TODO: Add tests and install targets if needed.
