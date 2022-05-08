@@ -6,3 +6,5 @@
 /.vs
 /AxH/out/build/x64-debug
 /AxH/doc
+/AxH/include/GL
+/AxH/lib
