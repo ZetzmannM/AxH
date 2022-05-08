@@ -45,9 +45,9 @@ namespace math {
 			this->strides = std::forward<std::array<size_t, dim>>(strides);
 		}
 
-		template<typename... S,
-				typename = std::enable_if<all_true<std::is_convertible<S, size_t>::value...>::value>::type>
-		size_t operator()(S... t) const {
+		template<typename... S>
+			requires all_true<std::is_convertible<S,size_t>...>::value
+		size_t operator()(S... t)  const {
 			static_assert(sizeof...(t) == dim);
 
 			size_t ind[dim]{ size_t(t)... };
@@ -91,9 +91,9 @@ namespace math {
 			this->strides = std::forward<std::array<size_t, dim>>(strides);
 		}
 
-		template<typename S,
-			typename = std::enable_if<std::is_convertible<S, size_t>::value>::type>
-			size_t operator()(S t) const {
+		template<typename S>
+			requires std::is_convertible<S, size_t>::value
+		size_t operator()(S t) const {
 			return this->offset + this->strides[0] * t;
 		}
 
@@ -144,12 +144,12 @@ namespace math {
 			}
 		}
 		
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp_ref& operator=(const comp<F, A, S...>& ref);
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp_ref& operator=(const comp_ref<F, A, S...>& ref);
 
 
@@ -191,12 +191,12 @@ namespace math {
 			return *this;
 		}
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp_ref& operator=(const comp<F, A>& ref);
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp_ref& operator=(const comp_ref<F, A>& ref);
 
 
@@ -225,16 +225,16 @@ namespace math {
 
 	public:
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp(const comp<F, A, S...>& ref) {
 			for (uint32 t = 0; t < A; ++t) {
 				this->operator[](t) = ref[t];
 			}
 		}
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp(const comp_ref<F, A, S...>& ref) {
 			for (uint32 t = 0; t < A; ++t) {
 				this->operator[](t) = ref[t];
@@ -270,8 +270,8 @@ namespace math {
 			}
 		}
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp& operator=(const comp_ref<F, A, S...>&);
 
 		comp_ref<T, S...> operator[](size_t ind) {
@@ -299,16 +299,16 @@ namespace math {
 
 		comp() { }
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp(const comp<F, A>& ref) {
 			for (uint32 t = 0; t < A; ++t) {
 				this->data[t] = ref[t];
 			}
 		}
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp(const comp_ref<F, A>& ref) {
 			for (uint32 t = 0; t < A; ++t) {
 				this->data[t] = ref[t];
@@ -335,8 +335,8 @@ namespace math {
 			}
 		}
 
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
+		template<typename F>
+			requires std::is_convertible<F, T>::value
 		comp& operator=(const comp_ref<F, A>&);
 
 		T& operator[](size_t ind) {
@@ -353,8 +353,8 @@ namespace math {
 		typename T, 
 		size_t A, 
 		size_t... S >
-	template<typename F,
-		typename>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
 	comp_ref<T, A, S...>& comp_ref<T, A, S...>::operator=(const comp<F, A, S...>& ref) {
 		for (size_t i = 0; i < A; i++) {
 			this->operator[](i) = ref[i];
@@ -366,8 +366,8 @@ namespace math {
 		typename T,
 		size_t A,
 		size_t... S >
-	template<typename F,
-		typename>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
 	comp_ref<T, A, S...>& comp_ref<T, A, S...>::operator=(const comp_ref<F, A, S...>& ref) {
 		for (size_t i = 0; i < A; i++) {
 			this->operator[](i) = ref[i];
@@ -379,8 +379,8 @@ namespace math {
 	template<
 		typename T,
 		size_t A>
-	template<typename F,
-		typename>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
 	comp_ref<T, A>& comp_ref<T, A>::operator=(const comp<F, A>& ref) {
 		for (size_t i = 0; i < A; i++) {
 			this->data[this->descr(i)] = ref[i];
@@ -392,8 +392,8 @@ namespace math {
 	template<
 		typename T,
 		size_t A >
-	template<typename F,
-		typename>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
 	comp_ref<T, A>& comp_ref<T, A>::operator=(const comp_ref<F, A>& ref) {
 		for (size_t i = 0; i < A; i++) {
 			this->data[this->descr(i)] = ref[i];
@@ -404,8 +404,8 @@ namespace math {
 	template<
 		typename T,
 		size_t A >
-	template<typename F,
-		typename>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
 	comp<T, A>& comp<T, A>::operator=(const comp_ref<F, A>& ref) {
 		for (size_t i = 0; i < A; i++) {
 			this->data[i] = ref[i];
@@ -417,8 +417,8 @@ namespace math {
 		typename T,
 		size_t A,
 		size_t... S>
-	template<typename F,
-		typename>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
 	comp<T, A, S...>& comp<T, A, S...>::operator=(const comp_ref<F, A, S...>& ref) {
 		for (size_t i = 0; i < A; i++) {
 			this->operator[](i) = ref[i];
