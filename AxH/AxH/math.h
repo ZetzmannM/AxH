@@ -2,6 +2,7 @@
 
 #include <array>
 #include <tuple>
+#include <concepts>
 
 #include <type_traits>
 #include <utility>
@@ -113,6 +114,7 @@ namespace math {
 	using comp_initializer = typename comp_init<T, N>::type;
 
 	template<typename T, size_t A, size_t... S>
+		requires std::is_default_constructible<T>::value
 	struct comp;
 
 	template<typename T, size_t A, size_t... S>
@@ -193,11 +195,22 @@ namespace math {
 
 		template<typename F>
 			requires std::is_convertible<F, T>::value
-		comp_ref& operator=(const comp<F, A>& ref);
+		comp_ref& operator=(const comp<F, A>& ref) {
+			for (size_t i = 0; i < A; i++) {
+				this->data[this->descr(i)] = ref[i];
+			}
+
+			return *this;
+		}
 
 		template<typename F>
 			requires std::is_convertible<F, T>::value
-		comp_ref& operator=(const comp_ref<F, A>& ref);
+		comp_ref& operator=(const comp_ref<F, A>& ref) {
+			for (size_t i = 0; i < A; i++) {
+				this->data[this->descr(i)] = ref[i];
+			}
+			return *this;
+		}
 
 
 		T& operator[](size_t ind) {
@@ -211,6 +224,7 @@ namespace math {
 	};
 
 	template<typename T, size_t A, size_t... S>
+		requires std::is_default_constructible<T>::value
 	/// <summary>
 	/// This class represents a multi dimensional array with elements of type T.
 	/// The dimensional extends are given via template arguments
@@ -337,7 +351,12 @@ namespace math {
 
 		template<typename F>
 			requires std::is_convertible<F, T>::value
-		comp& operator=(const comp_ref<F, A>&);
+		comp& operator=(const comp_ref<F, A>&) {
+			for (size_t i = 0; i < A; i++) {
+				this->data[i] = ref[i];
+			}
+			return *this;
+		}
 
 		T& operator[](size_t ind) {
 			return data[ind];
@@ -349,11 +368,115 @@ namespace math {
 
 	};
 	
+
+	//###########################################################################################################################
+
+	template<typename T>
+	concept math_type = requires (T a, T b) {
+		a + b;
+		a - b;
+		a * b;
+		a += b;
+		a *= b;
+	};
+
+
+	template<math_type T, size_t A, size_t B >
+	class matrix;
+
+	template<math_type T, size_t A>
+	/// <summary>
+	/// This class represent a vector the size is given by the template argument
+	/// </summary>
+	class vector : public comp<T, A> {
+	public:
+		using comp<T, A>::comp;
+
+		operator matrix<T, A, 1>();
+
+		template<typename F>
+			requires std::is_convertible<F, T>::value
+		vector operator*(F scale) const;
+
+		template<typename F,
+			typename G>
+			requires std::is_convertible<F, T>::value
+				  && std::is_convertible<T, G>::value
+		G operator*(const vector<F, A>& scale);
+
+		template<typename F>
+			requires std::is_convertible<F, T>::value
+		vector operator+(const vector<F, A>& scale) const;
+
+		template<typename F>
+			requires std::is_convertible<F, T>::value
+		vector operator-(const vector<F, A>& scale) const;
+
+		template<std::floating_point F>
+		F length() const;
+
+	};
+
+	template<math_type T, size_t A, size_t B >
+	/// <summary>
+	/// This class represent a matrix the size is given by the template argument
+	/// </summary>
+	class matrix : public comp<T, A, B> {
+	public:
+		using comp<T, A, B>::comp;
+
+		template<typename F>
+			requires std::is_convertible<F, T>::value
+		matrix<T, A, B> operator+(const matrix<F, A, B>& ref);
+
+		template<typename F,
+			size_t C>
+			requires std::is_convertible<F, T>::value
+		matrix<T, A, C> operator*(const matrix<F, B, C>& ref);
+
+		template<typename F>
+			requires std::is_convertible<F, T>::value
+		vector<T, A> operator*(const vector<F, B>& ref);
+
+		matrix<T, B, A> transpose();
+
+	};
+
+
+//#######################################################################################################################
+	
+	class vector_math {
+		template<math_type T>
+		/// <summary>
+		/// Calculates the cross product of the given vectors
+		/// </summary>
+		/// <returns>The cross product</returns>
+		vector<T, 3> cross_product(const vector<T, 3>&, const vector<T, 3>&);
+
+		template< 
+			std::floating_point T,
+			size_t A >
+		/// <summary>
+		/// project the first vector onto the second. That is it returns a multiple of the second vector.
+		/// </summary>
+		/// <returns>A projection of the first vector onto the second</returns>
+		vector<T, A> project(const vector<T, A>&, const vector<T, A>&);
+
+		template<
+			std::floating_point T,
+			size_t A >
+		/// <returns> A normalized version of the given vector </returns>
+		vector<T, A> normalize(const vector<T, A>&);
+	};
+
+//########################################################################################################################
+	
+
 	template<
-		typename T, 
-		size_t A, 
+		typename T,
+		size_t A,
 		size_t... S >
-	template<typename F>
+		template<typename F>
 		requires std::is_convertible<F, T>::value
 	comp_ref<T, A, S...>& comp_ref<T, A, S...>::operator=(const comp<F, A, S...>& ref) {
 		for (size_t i = 0; i < A; i++) {
@@ -366,7 +489,7 @@ namespace math {
 		typename T,
 		size_t A,
 		size_t... S >
-	template<typename F>
+		template<typename F>
 		requires std::is_convertible<F, T>::value
 	comp_ref<T, A, S...>& comp_ref<T, A, S...>::operator=(const comp_ref<F, A, S...>& ref) {
 		for (size_t i = 0; i < A; i++) {
@@ -378,46 +501,9 @@ namespace math {
 
 	template<
 		typename T,
-		size_t A>
-	template<typename F>
-		requires std::is_convertible<F, T>::value
-	comp_ref<T, A>& comp_ref<T, A>::operator=(const comp<F, A>& ref) {
-		for (size_t i = 0; i < A; i++) {
-			this->data[this->descr(i)] = ref[i];
-		}
-
-		return *this;
-	}
-
-	template<
-		typename T,
-		size_t A >
-	template<typename F>
-		requires std::is_convertible<F, T>::value
-	comp_ref<T, A>& comp_ref<T, A>::operator=(const comp_ref<F, A>& ref) {
-		for (size_t i = 0; i < A; i++) {
-			this->data[this->descr(i)] = ref[i];
-		}
-		return *this;
-	}
-
-	template<
-		typename T,
-		size_t A >
-	template<typename F>
-		requires std::is_convertible<F, T>::value
-	comp<T, A>& comp<T, A>::operator=(const comp_ref<F, A>& ref) {
-		for (size_t i = 0; i < A; i++) {
-			this->data[i] = ref[i];
-		}
-		return *this;
-	}
-
-	template<
-		typename T,
 		size_t A,
 		size_t... S>
-	template<typename F>
+		template<typename F>
 		requires std::is_convertible<F, T>::value
 	comp<T, A, S...>& comp<T, A, S...>::operator=(const comp_ref<F, A, S...>& ref) {
 		for (size_t i = 0; i < A; i++) {
@@ -426,130 +512,177 @@ namespace math {
 		return *this;
 	}
 
-	//###########################################################################################################################
-	template<typename T, size_t A, size_t B >
-	class matrix;
 
-	template<typename T, size_t A>
-	/// <summary>
-	/// This class represent a vector the size is given by the template argument
-	/// </summary>
-	class vector : public comp<T, A> {
-	public:
-		using comp<T, A>::comp;
-
-		operator matrix<T, A, 1>();
-
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
-		vector operator*(F scale) const {
-			vector<T, A> cpy = *this;
-			for (size_t t = 0; t < A; t++) {
-				cpy[t] *= scale;
+	template<
+		math_type T,
+		size_t A,
+		size_t B>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
+	matrix<T, A, B> matrix<T, A, B>::operator+(const matrix<F, A, B>& ref) {
+		matrix<T, A, B> cpy = *this;
+		for (size_t a = 0; a < A; ++a) {
+			for (size_t b = 0; b < B; ++b) {
+				cpy[a][b] += ref[a][b];
 			}
-			return cpy;
 		}
+		return cpy;
+	}
 
-		template<typename F,
-			typename G,
-			typename = std::enable_if<std::is_convertible<F, T>::value& std::is_convertible<T, G>::value>::type>
-			vector operator*(const vector<F, A>& scale) const {
-			G val;
-			for (size_t t = 0; t < A; ++t) {
-				val += this->operator[](t) * scale[t];
-			}
-			return val;
-		}
-
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
-			vector operator+(const vector<F, A>& scale) const {
-			vector cpy = *this;
-			for (size_t t = 0; t < A; ++t) {
-				cpy[t] += scale[t];
-			}
-			return cpy;
-		}
-
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
-		vector operator-(const vector<F, A>& scale) const {
-			vector cpy = *this;
-			for (size_t t = 0; t < A; ++t) {
-				cpy[t] -= scale[t];
-			}
-			return cpy;
-		}
-
-
-	};
-
-	template<typename T, size_t A, size_t B >
-	/// <summary>
-	/// This class represent a matrix the size is given by the template argument
-	/// </summary>
-	class matrix : public comp<T, A, B> {
-	public:
-		using comp<T, A, B>::comp;
-
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type>
-		matrix<T, A, B> operator+(const matrix<F, A, B>& ref) {
-			matrix<T, A, B> cpy = *this;
-			for (size_t a = 0; a < A; ++a) {
+	template<
+		math_type T,
+		size_t A,
+		size_t B>
+	template<typename F,
+		size_t C>
+		requires std::is_convertible<F, T>::value
+	matrix<T, A, C> matrix<T, A, B>::operator*(const matrix<F, B, C>& ref) {
+		matrix<T, A, C> val;
+		for (size_t a = 0; a < A; ++a) {
+			for (size_t c = 0; c < C; ++c) {
 				for (size_t b = 0; b < B; ++b) {
-					cpy[a][b] += ref[a][b];
-				}
-			}
-			return cpy;
-		}
-
-		template<typename F,
-			size_t C,
-		typename = std::enable_if<std::is_convertible<F, T>::value>::type >
-			matrix<T, A, C> operator*(const matrix<F, B, C>& ref) {
-			matrix<T, A, C> val;
-			for (size_t a = 0; a < A; ++a) {
-				for (size_t c = 0; c < C; ++c) {
-					for (size_t b = 0; b < B; ++b) {
-						val[a][c] += (*this)[a][b] * ref[b][c];
-					}
-				}
-			}
-			return val;
-		}
-
-		template<typename F,
-			typename = std::enable_if<std::is_convertible<F, T>::value>::type >
-		vector<T, A> operator*(const vector<F, B>& ref) {
-			vector<T, A> val;
-			for (size_t a = 0; a < A; ++a) {
-				for (size_t b = 0; b < B; ++b) {
-						val[a] += (*this)[a][b] * ref[b];
-				}
-			}
-			return val;
-		}
-
-		matrix<T, B, A> transpose() {
-			matrix<T, A, B> trans;
-			for (size_t a = 0; a < A; ++a) {
-				for (size_t b = 0; b < B; ++b) {
-					trans[b][a] = (*this)[a][b];
+					val[a][c] += (*this)[a][b] * ref[b][c];
 				}
 			}
 		}
+		return val;
+	}
 
-	};
+	template<
+		math_type T,
+		size_t A,
+		size_t B>
+	template<typename F>
+		requires std::is_convertible<F, T>::value
+	vector<T, A> matrix<T, A, B>::operator*(const vector<F, B>& ref) {
+		vector<T, A> val;
+		for (size_t a = 0; a < A; ++a) {
+			for (size_t b = 0; b < B; ++b) {
+				val[a] += (*this)[a][b] * ref[b];
+			}
+		}
+		return val;
+	}
 
-	template<typename T,
+	template<
+		math_type T,
+		size_t A,
+		size_t B>
+	matrix<T, B, A> matrix<T, A, B>::transpose() {
+		matrix<T, A, B> trans;
+		for (size_t a = 0; a < A; ++a) {
+			for (size_t b = 0; b < B; ++b) {
+				trans[b][a] = (*this)[a][b];
+			}
+		}
+	}
+
+
+	template<math_type T,
 		size_t A >
-	vector<T,A>::operator matrix<T, A, 1>() {
+	inline vector<T, A>::operator matrix<T, A, 1>() {
 		matrix<T, A, 1> ref;
 		for (size_t i = 0; i < A; ++i) {
 			ref[i][0] = (*this)[i];
 		}
 		return ref;
+	}
+
+
+	template<math_type T, size_t A>
+	template<typename F,
+		typename G>
+		requires std::is_convertible<F, T>::value
+			  && std::is_convertible<T, G>::value
+	G vector<T, A>::operator*(const vector<F, A>& scale) {
+		G val;
+		for (size_t t = 0; t < A; ++t) {
+			val += this->operator[](t) * scale[t];
+		}
+		return val;
+	}
+
+
+	template<math_type T,
+		size_t A >
+	template<typename F>
+		requires std::is_convertible<F, T>::value
+	vector<T,A> vector<T,A>::operator*(F scale) const {
+		vector<T, A> cpy = *this;
+		for (size_t t = 0; t < A; t++) {
+			cpy[t] *= scale;
+		}
+		return cpy;
+	}
+
+	template<math_type T,
+		size_t A >
+	template<typename F>
+		requires std::is_convertible<F, T>::value
+	vector<T,A> vector<T, A>::operator+(const vector<F, A>& scale) const {
+		vector cpy = *this;
+		for (size_t t = 0; t < A; ++t) {
+			cpy[t] += scale[t];
+		}
+		return cpy;
+	}
+
+	template<math_type T,
+		size_t A >
+	template<typename F>
+		requires std::is_convertible<F, T>::value
+	vector<T,A> vector<T,A>::operator-(const vector<F, A>& scale) const {
+		vector cpy = *this;
+		for (size_t t = 0; t < A; ++t) {
+			cpy[t] -= scale[t];
+		}
+		return cpy;
+	}
+
+	template<math_type T,
+		size_t A >
+	template<std::floating_point F>
+	F vector<T,A>::length() const {
+		F sum = 0;
+		for (size_t t = 0; t < A; ++t) {
+			sum += (*this)[t] * (*this)[t];
+		}
+
+		//ew
+		if constexpr (std::is_same<F, double>) {
+			return std::sqrt(sum);
+		}
+		else if constexpr (std::is_same<F, long double>) {
+			return std::sqrtl(sum);
+		}
+		else {
+			return std::sqrtf(sum);
+		}
+	}
+
+	template<math_type T>
+	vector<T, 3> vector_math::cross_product(const vector<T, 3>& a, const vector<T, 3>& b) {
+		vector<T, 3> c;
+		c[0] = (a[1] * b[2] - a[2] * b[1]);
+		c[1] = -(a[0] * b[2] - a[2] * b[0]);
+		c[2] = (a[0] * b[1] - a[1] * b[0]);
+		return c;
+	}
+
+	template<
+		std::floating_point T,
+		size_t A >
+	vector<T, A> vector_math::project(const vector<T, A>& a, const vector<T, A>& b) {
+		vector<T, A> bN = normalize<T, A>(b);
+		return bN * (bN * a);
+	}
+
+	template<
+		std::floating_point T,
+		size_t A >
+	vector<T, A> vector_math::normalize(const vector<T, A>& a) {
+		T one = 1;
+		return a * (one / a.length<T>());
 	}
 
 }

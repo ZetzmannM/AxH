@@ -16,7 +16,7 @@ template<typename T> using owner = T;    //no ownership assumed otherwise
 template<typename T> using nullable = T; //non_null assumed otherwise !!
 
 ///<summary>
-/// The man_ptr, man_null_ptr and man_arr_ptr are designed for passing pointers of which there should only be one occurance.
+/// The pass_ptr, pass_null_ptr and pass_arr_ptr are designed for passing pointers of which there should only be one occurance.
 /// If nothing extracts the pointer from the object by calling get(), the object is automatically deleted when the deconstructor is called.
 /// The copyFrom constructor and the copyFrom assignment operator both move the pointer from the incoming object to the recieving.
 ///</summary>
@@ -84,7 +84,7 @@ protected:
 	inline void _inv();
 };
 ///<summary>
-/// The man_ptr, man_null_ptr and man_arr_ptr are designed for passing pointers of which there should only be one occurance.
+/// The pass_ptr, pass_null_ptr and pass_arr_ptr are designed for passing pointers of which there should only be one occurance.
 /// If nothing extracts the pointer from the object by calling get(), the object is automatically deleted when the deconstructor is called.
 /// The copyFrom constructor and the copyFrom assignment operator both move the pointer from the incoming object to the recieving.
 ///</summary>
@@ -107,7 +107,7 @@ template<typename T> struct pass_null_ptr : pass_ptr<T> {
 	virtual void discard() override;
 };
 ///<summary>
-/// The man_ptr, man_null_ptr and man_arr_ptr are designed for passing pointers of which there should only be one occurance.
+/// The pass_ptr, pass_null_ptr and pass_arr_ptr are designed for passing pointers of which there should only be one occurance.
 /// If nothing extracts the pointer from the object by calling get(), the object is automatically deleted when the deconstructor is called.
 /// The copyFrom constructor and the copyFrom assignment operator both move the pointer from the incoming object to the recieving.
 ///</summary>
@@ -318,18 +318,14 @@ template<typename T> struct DefaultDuplicator {
 		return new T(in);
 	}
 };
-template<typename T, class D = DefaultDuplicator<T>> struct ptr_vector {
+template<typename T, class D = DefaultDuplicator<T>> 
+struct ptr_vector {
 private:
 	std::vector<owner<T*>> cnt;
+
 	void _delPtr() {
 		auto it = cnt.begin();
 		while (it != cnt.end()) {
-#ifdef __DEBUG
-			std::stringstream ss;
-			ss << PTRSTR(*it);
-			ss << std::string(", ") << (typeid(T).name());
-			PRINT(ss.str(), CHANNEL_DECONST_DEBUG);
-#endif
 			delete* it;
 			*it = 0;
 			it++;

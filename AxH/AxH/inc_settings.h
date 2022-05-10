@@ -13,9 +13,7 @@
 ///Whether Debugging should be enabled
 #define __DEBUG
 
-#define NAME_PARABOL_ENGINE "AxH v0.0.0.0.0.-1"
-
-#define CONCURRENT_FRAMES 3
+#define NAME_AxH_ENGINE "AxH v0.0.0.0.0.-1"
 
 #define V_SYNC_FREQ 60
 
